@@ -43,9 +43,8 @@ function deriveWinner(gameBoard: GameBoard, players: TwoPlayers): string {
 }
 
 @Component({
-  selector: 'app-root',
-  standalone: true,
-  template: `
+    selector: 'app-root',
+    template: `
     <main>
       <div id="game-container">
         <ol id="players" class="highlight-player">
@@ -67,7 +66,7 @@ function deriveWinner(gameBoard: GameBoard, players: TwoPlayers): string {
       </div>
     </main>
   `,
-  imports: [GameBoardComponent, PlayerComponent],
+    imports: [GameBoardComponent, PlayerComponent]
 })
 export class AppComponent {
   players = signal({ ...initialPlayers });
