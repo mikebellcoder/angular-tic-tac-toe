@@ -9,16 +9,15 @@ import { GameBoard, Square } from '../types';
       @for (row of (board())!(); track $index; let rowIndex = $index) {
       <li>
         <ol>
-          <li>hello</li>
-          <!-- @for (playerSymbol of row; track $index) {
+          @for (playerSymbol of row; track $index; let colIndex = $index) {
           <li>
             <button
-              (click)="onSelectSquare.emit({ row: 0, col: 1 })"
+              (click)="onSelectSquare.emit({ row: rowIndex, col: colIndex })"
             >
               {{ playerSymbol }}
             </button>
           </li>
-          } -->
+          }
         </ol>
       </li>
       }

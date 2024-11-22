@@ -17,6 +17,11 @@ export type GameTurn = {
     square: Square;
 };
 
+export type Player = {
+    name: string;
+    symbol: PlayerSymbolType;
+}
+
 export type TwoPlayers = {
     X: string;
     O: string;

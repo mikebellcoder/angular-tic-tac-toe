@@ -68,24 +68,27 @@ h1 {
   gap: 2rem;
 }
 
-#players li {
+#players player {
+  width: 50%;
+}
+
+#players player li {
   display: flex;
   align-items: center;
-  width: 50%;
   border: 2px solid transparent;
 }
 
-#players.highlight-player li.active {
+#players.highlight-player player li.active {
   border-color: #f6e35a;
   animation: pulse 2s infinite ease-in-out;
 }
 
-#players.highlight-player li.active .player-name,
-#players.highlight-player li.active .player-symbol {
+#players.highlight-player player li.active .player-name,
+#players.highlight-player player li.active .player-symbol {
   color: #f6e35a;
 }
 
-#players button {
+#players player li button {
   width: 3rem;
   border: none;
   background: none;
@@ -97,7 +100,7 @@ h1 {
   text-align: center;
 }
 
-#players button:hover {
+#players player button:hover {
   color: #f8ca31;
 }
 

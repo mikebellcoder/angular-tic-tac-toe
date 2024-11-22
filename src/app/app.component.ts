@@ -3,6 +3,8 @@ import { GameBoardComponent } from './components/game-board.component';
 import { GameBoard, GameTurn, TwoPlayers } from './types';
 import { WINNING_COMBINATIONS } from './winning-combinations';
 import { PlayerComponent } from './components/player.component';
+import { LogComponent } from './components/log.component';
+import { GameOverComponent } from './components/game-over.component';
 
 const initialGameBoard: GameBoard = [
   [null, null, null],
@@ -22,74 +24,89 @@ function deriveActivePlayer(gameTurns: GameTurn[]) {
   return currentPlayer;
 }
 
-function deriveWinner(gameBoard: GameBoard, players: TwoPlayers): string {
-  let winner: string = '';
-
-  for (const combo of WINNING_COMBINATIONS) {
-    const firstSquareSymbol = gameBoard[combo[0].row][combo[0].column];
-    const secondSquareSymbol = gameBoard[combo[1].row][combo[1].column];
-    const thirdSquareSymbol = gameBoard[combo[2].row][combo[2].column];
-
-    if (
-      firstSquareSymbol &&
-      firstSquareSymbol === secondSquareSymbol &&
-      firstSquareSymbol === thirdSquareSymbol
-    ) {
-      winner = players[firstSquareSymbol as 'X' | 'O'];
-    }
-  }
-
-  return winner;
-}
-
 @Component({
-    selector: 'app-root',
-    template: `
+  selector: 'app-root',
+  standalone: true,
+  imports: [GameBoardComponent, PlayerComponent, LogComponent, GameOverComponent],
+  template: `
     <main>
       <div id="game-container">
         <ol id="players" class="highlight-player">
           <player
-            initialName="Player 1"
+            [initialName]="players().X"
             symbol="X"
-            [isActive]="activePlayer() === 'X'"            
+            [isActive]="activePlayer() === 'X'"
+            (onChangeName)="handlePlayerNameChange($event)"
           ></player>
           <player
-            initialName="Player 2"
+            [initialName]="players().O"
             symbol="O"
-            [isActive]="activePlayer() === 'O'"            
+            [isActive]="activePlayer() === 'O'"
+            (onChangeName)="handlePlayerNameChange($event)"
           ></player>
         </ol>
+        @if(winner() || hasDraw()) {
+          <game-over
+            [winner]="winner()"
+            [draw]="hasDraw()"
+            (restart)="handleRestart()"
+          ></game-over>
+        }
         <game-board
           [board]="gameBoard"
           (onSelectSquare)="handleSelectSquare($event.row, $event.col)"
         ></game-board>
       </div>
+      <log [turns]="gameTurns()"></log>
     </main>
   `,
-    imports: [GameBoardComponent, PlayerComponent]
 })
 export class AppComponent {
   players = signal({ ...initialPlayers });
-  gameBoard = signal([...initialGameBoard.map((r) => [...r])]);
-  gameTurns = signal([] as GameTurn[]);
-  activePlayer = computed(() => deriveActivePlayer(this.gameTurns()));
-
-  winner = computed(() => deriveWinner(this.gameBoard(), this.players()));
-
-  hasDraw = computed(() => this.gameTurns().length === 9 && !this.winner());
-
-  private _updateGameboard() {
-    // TODO update this private method to use a computed signal instead, will be called based on gameTurns updating.
-    const newBoard = this.gameBoard();
+  gameBoard = computed(() => {
+    const newBoard = [...initialGameBoard.map((r) => [...r])]
+    
     for (const turn of this.gameTurns()) {
       const { player, square } = turn;
       newBoard[square.row][square.col] = player;
     }
-    this.gameBoard.set(newBoard);
+
+    return newBoard;
+  });
+  gameTurns = signal([] as GameTurn[]);
+  activePlayer = computed(() => deriveActivePlayer(this.gameTurns()));
+
+  winner = computed(() =>
+    this.gameTurns().length >= 3 ? this._deriveWinner(this.gameBoard(), this.players()) : ''
+  );
+
+  hasDraw = computed(() => this.gameTurns().length === 9 && !this.winner());
+
+  private _deriveWinner(gameBoard: GameBoard, players: TwoPlayers): string {
+    let winner: string = '';
+  
+    for (const combo of WINNING_COMBINATIONS) {
+      const firstSquareSymbol = gameBoard[combo[0].row][combo[0].column];
+      const secondSquareSymbol = gameBoard[combo[1].row][combo[1].column];
+      const thirdSquareSymbol = gameBoard[combo[2].row][combo[2].column];
+  
+      if (
+        firstSquareSymbol &&
+        firstSquareSymbol === secondSquareSymbol &&
+        firstSquareSymbol === thirdSquareSymbol
+      ) {
+        winner = players[firstSquareSymbol as 'X' | 'O'];
+      }
+    }
+  
+    return winner;
   }
 
-  public handlePlayerNameChange(newSymbol: string, newName: string) {
-    this.players.set({ ...this.players(), [newSymbol]: newName });
+  // ! this has problems reactively updating the player state
+  public handlePlayerNameChange(event: { symbol: 'X' | 'O'; name: string }) {
+    const newPlayers = { ...this.players() };
+    newPlayers[event.symbol] = event.name;
+    this.players.set(newPlayers);
   }
 
   public handleSelectSquare(rowIndex: number, colIndex: number) {
@@ -103,12 +120,9 @@ export class AppComponent {
       ...prevTurns,
     ];
     this.gameTurns.set(updatedTurns);
-    // update game board
-    this._updateGameboard();
   }
 
   public handleRestart() {
     this.gameTurns.set([]);
-    this.players.set({ ...initialPlayers });
   }
 }
